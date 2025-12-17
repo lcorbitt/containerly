@@ -1,9 +1,15 @@
 'use client';
 
-import { useCurrentUser as useCurrentUserQuery } from '@/queries';
+import { useSession } from 'next-auth/react';
 
 export function useCurrentUser() {
-  return useCurrentUserQuery();
+  const { data: session, status } = useSession();
+  
+  return {
+    data: session?.user || null,
+    isLoading: status === 'loading',
+    isAuthenticated: !!session?.user,
+  };
 }
 
 

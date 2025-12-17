@@ -114,6 +114,3 @@ export function LookupDetail({ lookupId }: LookupDetailProps) {
   );
 }
 
-
-
-

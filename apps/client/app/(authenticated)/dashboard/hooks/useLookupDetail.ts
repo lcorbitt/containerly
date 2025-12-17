@@ -68,6 +68,3 @@ export function useLookupDetail(id: string | null) {
   };
 }
 
-
-
-

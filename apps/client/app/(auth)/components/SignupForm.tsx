@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiClient, setAuthToken } from '@/lib/apiClient';
-import { API_ENDPOINTS, SignupDto, AuthResponse } from '@containerly/common';
+import { signIn } from 'next-auth/react';
+import { env } from '@/env';
+import { API_ENDPOINTS, SignupDto } from '@containerly/common';
 
 export function SignupForm() {
   const [email, setEmail] = useState('');
@@ -20,18 +21,39 @@ export function SignupForm() {
 
     try {
       const data: SignupDto = { email, password, organizationName };
-      const response = await apiClient<AuthResponse>(
-        API_ENDPOINTS.AUTH.SIGNUP,
-        {
-          method: 'POST',
-          body: JSON.stringify(data),
-        }
-      );
-      await setAuthToken(response.token);
-      router.push('/dashboard');
+      
+      // Call signup API directly
+      const response = await fetch(`${env.API_URL}${API_ENDPOINTS.AUTH.SIGNUP}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Signup failed');
+      }
+
+      // Signup successful - automatically sign in and redirect to dashboard
+      const result = await signIn('credentials', {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        // If auto-login fails, redirect to login page
+        router.push(`/login?email=${encodeURIComponent(data.email)}&message=Account created! Please sign in.`);
+      } else {
+        // Successfully signed in - redirect to dashboard
+        router.push('/dashboard');
+        router.refresh();
+      }
     } catch (err: any) {
       setError(
-        err?.data?.message || err?.message || 'Signup failed. Please try again.'
+        err?.message || 'Signup failed. Please try again.'
       );
     } finally {
       setIsLoading(false);

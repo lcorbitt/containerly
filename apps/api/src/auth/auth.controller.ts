@@ -23,6 +23,11 @@ export class AuthController {
     return { message: 'Logged out successfully' };
   }
 
+  @Post('google')
+  async googleAuth(@Body() body: { email: string; name?: string }) {
+    return this.authService.googleAuth(body.email, body.name);
+  }
+
   @Get('me')
   @UseGuards(JwtAuthGuard)
   async getMe(@Request() req: any) {

@@ -94,6 +94,16 @@ NODE_ENV=development
 ```bash
 NEXT_PUBLIC_API_URL=http://localhost:3001
 NEXT_PUBLIC_WS_URL=ws://localhost:3001
+
+# Auth.js (NextAuth)
+NEXTAUTH_SECRET=your-nextauth-secret-key-change-in-production
+NEXTAUTH_URL=http://localhost:3000
+
+# Google OAuth (optional - for SSO)
+# Get these from https://console.cloud.google.com/apis/credentials
+# Create OAuth 2.0 Client ID and add authorized redirect URI: http://localhost:3000/api/auth/callback/google
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
 ```
 
 #### Worker Environment (`apps/worker/.env`)

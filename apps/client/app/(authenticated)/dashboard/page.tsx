@@ -1,16 +1,35 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { SearchInput } from './components/SearchInput';
 import { ResultsPanel } from './components/ResultsPanel';
 import { LookupDetail } from './components/LookupDetail';
-import { useLogout } from '../(auth)/hooks/useLogout';
-import { useCurrentUser } from '../(auth)/hooks/useCurrentUser';
+import { useLogout } from '../../(auth)/hooks/useLogout';
+import { useCurrentUser } from '../../(auth)/hooks/useCurrentUser';
 
 export default function DashboardPage() {
   const [selectedLookupId, setSelectedLookupId] = useState<string | null>(null);
   const { logout } = useLogout();
-  const { data: user } = useCurrentUser();
+  const { data: user, isLoading } = useCurrentUser();
+  const { status } = useSession();
+  const router = useRouter();
+
+  // Show loading state while checking authentication
+  if (status === 'loading' || isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    );
+  }
+
+  // Redirect to login if not authenticated
+  if (status === 'unauthenticated' || !user) {
+    router.push('/login');
+    return null;
+  }
 
   const handleLogout = async () => {
     await logout();
@@ -23,15 +42,26 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-900">Containerly</h1>
             <div className="flex items-center gap-4">
-              {user && (
-                <span className="text-sm text-gray-600">{user.email}</span>
+              {user ? (
+                <>
+                  <span className="text-sm text-gray-600">{user.email}</span>
+
+                  <button
+                    onClick={handleLogout}
+                    className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <button
+                    onClick={() => router.push('/login')}
+                    className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900"
+                  >
+                    Login
+                  </button>
               )}
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900"
-              >
-                Logout
-              </button>
+              
             </div>
           </div>
         </div>

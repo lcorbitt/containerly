@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15-alpine
@@ -12,7 +10,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user"]
+      test: ["CMD-SHELL", "pg_isready -U user -d containerly"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -28,14 +26,14 @@ services:
       retries: 5
 
   api:
-    build:
-      context: ./apps/api
-      dockerfile: Dockerfile
+    image: node:18-alpine
     ports:
       - "3001:3001"
     environment:
       DATABASE_URL: postgresql://user:password@postgres:5432/containerly
       REDIS_URL: redis://redis:6379
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
       JWT_EXPIRES_IN: 7d
       CLIENT_URL: http://localhost:3000
@@ -45,29 +43,30 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - ./apps/api:/app
+      - .:/app
       - /app/node_modules
+    working_dir: /app
+    command: sh -c "apk add --no-cache python3 make g++ && npm install && rm -rf node_modules/bcrypt && npm install bcrypt && echo 'Waiting for database...' && sleep 2 && cd apps/api && echo 'Running migrations...' && npm run migration:run && echo 'Starting API server...' && npm run dev"
 
   client:
-    build:
-      context: ./apps/client
-      dockerfile: Dockerfile
+    image: node:18-alpine
     ports:
       - "3000:3000"
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:3001
+      API_URL: http://api:3001
       NEXT_PUBLIC_WS_URL: ws://localhost:3001
     depends_on:
       - api
     volumes:
-      - ./apps/client:/app
+      - .:/app
       - /app/node_modules
-      - /app/.next
+      - /app/apps/client/.next
+    working_dir: /app
+    command: sh -c "npm install && cd apps/client && npm install && npm run dev"
 
   worker:
-    build:
-      context: ./apps/worker
-      dockerfile: Dockerfile
+    image: node:18-alpine
     environment:
       DATABASE_URL: postgresql://user:password@postgres:5432/containerly
       REDIS_URL: redis://redis:6379
@@ -77,9 +76,13 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      api:
+        condition: service_started
     volumes:
-      - ./apps/worker:/app
+      - .:/app
       - /app/node_modules
+    working_dir: /app
+    command: sh -c "npm install && cd apps/worker && npm run dev"
 
 volumes:
   postgres_data:

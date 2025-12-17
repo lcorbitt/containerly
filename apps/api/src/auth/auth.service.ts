@@ -114,5 +114,86 @@ export class AuthService {
       relations: ['organization'],
     });
   }
+
+  async googleAuth(email: string, name?: string): Promise<AuthResponse> {
+    // Find existing user
+    let user = await this.userRepository.findOne({
+      where: { email },
+      relations: ['organization'],
+    });
+
+    if (user) {
+      // User exists, return auth response
+      const token = this.jwtService.sign({
+        sub: user.id,
+        email: user.email,
+        orgId: user.orgId,
+        role: user.role,
+      });
+
+      return {
+        user: {
+          id: user.id,
+          email: user.email,
+          orgId: user.orgId,
+          role: user.role,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+        },
+        organization: {
+          id: user.organization.id,
+          name: user.organization.name,
+          createdAt: user.organization.createdAt,
+          updatedAt: user.organization.updatedAt,
+        },
+        token,
+      };
+    }
+
+    // Create new user and organization
+    const organization = this.organizationRepository.create({
+      name: name ? `${name}'s Organization` : 'New Organization',
+    });
+    const savedOrganization = await this.organizationRepository.save(organization);
+
+    // Generate a random password for OAuth users (they'll never use it)
+    const randomPassword = await bcrypt.hash(
+      Math.random().toString(36) + Date.now().toString(),
+      10
+    );
+
+    user = this.userRepository.create({
+      email,
+      password: randomPassword,
+      orgId: savedOrganization.id,
+      role: UserRole.ORG_ADMIN,
+    });
+
+    const savedUser = await this.userRepository.save(user);
+    const token = this.jwtService.sign({
+      sub: savedUser.id,
+      email: savedUser.email,
+      orgId: savedUser.orgId,
+      role: savedUser.role,
+    });
+
+    return {
+      user: {
+        id: savedUser.id,
+        email: savedUser.email,
+        orgId: savedUser.orgId,
+        role: savedUser.role,
+        createdAt: savedUser.createdAt,
+        updatedAt: savedUser.updatedAt,
+      },
+      organization: {
+        id: savedOrganization.id,
+        name: savedOrganization.name,
+        createdAt: savedOrganization.createdAt,
+        updatedAt: savedOrganization.updatedAt,
+      },
+      token,
+    };
+  }
 }
 

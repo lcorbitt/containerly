@@ -1,4 +1,5 @@
 import { env } from '../env';
+import { getSession } from 'next-auth/react';
 
 export class ApiError extends Error {
   constructor(
@@ -13,6 +14,19 @@ export class ApiError extends Error {
 
 async function getAuthToken(): Promise<string | null> {
   if (typeof window === 'undefined') return null;
+  
+  // Try to get token from Auth.js session first
+  try {
+    const session = await getSession();
+    if (session?.accessToken) {
+      return session.accessToken as string;
+    }
+  } catch (error) {
+    // Silently fail and fallback to localStorage
+    // This is expected during signup/login when no session exists yet
+  }
+  
+  // Fallback to localStorage for backward compatibility
   return localStorage.getItem('auth_token');
 }
 
@@ -30,9 +44,9 @@ export async function apiClient<T = any>(
   options: RequestInit = {}
 ): Promise<T> {
   const token = await getAuthToken();
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...(options.headers as Record<string, string>),
   };
 
   if (token) {

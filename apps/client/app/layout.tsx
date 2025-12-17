@@ -1,8 +1,4 @@
-'use client';
-
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { useState } from 'react';
+import { Providers } from './providers';
 import '../styles/globals.css';
 
 export default function RootLayout({
@@ -10,25 +6,10 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            staleTime: 60 * 1000,
-            refetchOnWindowFocus: false,
-          },
-        },
-      })
-  );
-
   return (
     <html lang="en">
       <body>
-        <QueryClientProvider client={queryClient}>
-          {children}
-          {process.env.NODE_ENV === 'development' && <ReactQueryDevtools />}
-        </QueryClientProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
