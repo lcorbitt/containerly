@@ -6,8 +6,8 @@ import { useSession } from 'next-auth/react';
 import { SearchInput } from './components/SearchInput';
 import { ResultsPanel } from './components/ResultsPanel';
 import { LookupDetail } from './components/LookupDetail';
-import { useLogout } from '../../(auth)/hooks/useLogout';
-import { useCurrentUser } from '../../(auth)/hooks/useCurrentUser';
+import { useLogout } from '../../(auth)/components/hooks/useLogout';
+import { useCurrentUser } from '../../(auth)/components/hooks/useCurrentUser';
 
 export default function DashboardPage() {
   const [selectedLookupId, setSelectedLookupId] = useState<string | null>(null);
@@ -61,7 +61,7 @@ export default function DashboardPage() {
                     Login
                   </button>
               )}
-              
+
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
+import axios from 'axios';
 
 // Use server-side API_URL if available (for Docker), otherwise fall back to NEXT_PUBLIC_API_URL (for client-side)
 const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -19,22 +20,16 @@ export const authOptions = {
         }
 
         try {
-          const response = await fetch(`${API_URL}/auth/login`, {
-            method: 'POST',
+          const response = await axios.post(`${API_URL}/auth/login`, {
+            email: credentials.email,
+            password: credentials.password,
+          }, {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-              email: credentials.email,
-              password: credentials.password,
-            }),
           });
 
-          if (!response.ok) {
-            return null;
-          }
-
-          const data = await response.json();
+          const data = response.data;
           return {
             id: data.user.id,
             email: data.user.email,
@@ -67,26 +62,20 @@ export const authOptions = {
           console.error('Google OAuth: No email provided');
           return false;
         }
-        
+
         try {
           // Find or create user in backend
-          const response = await fetch(`${API_URL}/auth/google`, {
-            method: 'POST',
+          const response = await axios.post(`${API_URL}/auth/google`, {
+            email: user.email,
+            name: user.name,
+            googleId: account.providerAccountId,
+          }, {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-              email: user.email,
-              name: user.name,
-              googleId: account.providerAccountId,
-            }),
           });
 
-          if (!response.ok) {
-            return false;
-          }
-
-          const data = await response.json();
+          const data = response.data;
           // Store backend user data in the user object
           (user as any).id = data.user.id;
           (user as any).orgId = data.user.orgId;

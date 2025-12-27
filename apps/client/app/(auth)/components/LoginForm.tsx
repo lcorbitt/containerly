@@ -1,60 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { signIn } from 'next-auth/react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useLogin } from '../hooks/useLogin';
+import { useLoginForm } from './hooks/useLoginForm';
 
 export function LoginForm() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const { login, isLoading, error } = useLogin();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    // Pre-fill email from URL params
-    const emailParam = searchParams.get('email');
-    const messageParam = searchParams.get('message');
-    
-    if (emailParam) {
-      setEmail(emailParam);
-    }
-    
-    if (messageParam) {
-      setSuccessMessage(messageParam);
-    }
-  }, [searchParams]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await login({ email, password });
-    } catch (err) {
-      // Error is handled by the hook
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    setIsGoogleLoading(true);
-    try {
-      const result = await signIn('google', {
-        redirect: false,
-        callbackUrl: '/dashboard',
-      });
-      
-      if (result?.ok) {
-        router.push('/dashboard');
-        router.refresh();
-      }
-    } catch (err) {
-      console.error('Google sign in error:', err);
-    } finally {
-      setIsGoogleLoading(false);
-    }
-  };
+  const {
+    email,
+    setEmail,
+    password,
+    setPassword,
+    handleSubmit,
+    handleGoogleSignIn,
+    isLoading,
+    isGoogleLoading,
+    error,
+    successMessage,
+  } = useLoginForm();
 
   return (
     <div className="space-y-4">
@@ -95,7 +55,7 @@ export function LoginForm() {
 
         {error && (
           <div className="text-red-600 text-sm">
-            {error instanceof Error ? error.message : 'Login failed'}
+            {error}
           </div>
         )}
 

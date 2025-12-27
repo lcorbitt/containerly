@@ -1,0 +1,202 @@
+# =====================================================================
+# FRONTEND ARCHITECTURE RULES
+# Next.js + React + TypeScript
+# Axios-only, Domain-Intent Hooks
+#
+# STRICT DIRECTIONAL FLOW:
+# UI Components
+#   → Component-Specific Hooks
+#     → Entity / Domain Hooks
+#       → Next.js API Routes (BFF)
+#
+# =====================================================================
+
+
+# ---------------------------------------------------------------------
+# LAYER 1 — UI COMPONENTS
+# ---------------------------------------------------------------------
+# Responsibilities:
+# - Render UI only
+# - No data fetching, mutations, or business logic
+#
+# Allowed dependencies:
+# - Component-specific hooks
+# - Presentational UI components
+#
+# Forbidden dependencies:
+# - Domain hooks
+# - API routes
+# - Any HTTP clients or data libraries
+
+[files]
+include = ["**/*.tsx"]
+exclude = [
+  "**/hooks/**",
+  "**/entities/**",
+  "**/app/api/**"
+]
+
+[rules]
+# UI components must not fetch or mutate data
+disallow_patterns = [
+  "fetch(",
+  "axios.",
+  "useQuery(",
+  "useMutation("
+]
+
+# UI components must not import domain hooks
+disallow_imports = [
+  "@/entities/**",
+  "../entities/**",
+  "../../entities/**"
+]
+
+# UI components must not reference API routes
+disallow_imports_patterns = [
+  "/api/"
+]
+
+
+# ---------------------------------------------------------------------
+# LAYER 2 — COMPONENT-SPECIFIC HOOKS
+# ---------------------------------------------------------------------
+# Responsibilities:
+# - Manage component-level UI state and behavior
+# - Compose domain hooks
+#
+# Allowed dependencies:
+# - Domain hooks
+#
+# Forbidden dependencies:
+# - API routes
+# - HTTP clients
+
+[files]
+include = ["**/hooks/use*.ts"]
+exclude = ["**/entities/**"]
+
+[rules]
+# Component hooks must not call APIs directly
+disallow_patterns = [
+  "fetch(",
+  "axios."
+]
+
+# Component hooks MAY import domain hooks
+allow_imports = [
+  "@/entities/**",
+  "../entities/**",
+  "../../entities/**"
+]
+
+
+# ---------------------------------------------------------------------
+# LAYER 3 — ENTITY / DOMAIN HOOKS
+# ---------------------------------------------------------------------
+# Responsibilities:
+# - Represent domain intent (NOT implementation details)
+# - Expose all domain operations from a single hook
+# - Handle all data fetching and mutations
+#
+# Naming rules:
+#   ✅ useAuth, usePosts
+#   ❌ useLogin, useLogout, useCreatePost
+#
+# Allowed dependencies:
+# - Axios
+# - Next.js API routes ONLY
+#
+# Forbidden dependencies:
+# - UI components
+# - Component hooks
+# - External or NestJS APIs
+
+[files]
+include = ["**/entities/**/use*.ts"]
+
+[rules]
+# Axios is REQUIRED
+require_patterns = [
+  "axios\\."
+]
+
+# fetch() is NEVER allowed
+disallow_patterns = [
+  "fetch("
+]
+
+# Domain hooks must call ONLY Next.js API routes
+require_patterns_any = [
+  "axios\\.(get|post|put|patch|delete)\\(['\"]\\/api\\/"
+]
+
+# Prevent calls to external or backend services
+disallow_patterns = [
+  "http://",
+  "https://",
+  "process.env",
+  "NEST",
+  "nestjs"
+]
+
+
+# ---------------------------------------------------------------------
+# DOMAIN HOOK NAMING ENFORCEMENT
+# ---------------------------------------------------------------------
+# Domain hooks must describe DOMAIN INTENT,
+# not individual actions or mutations.
+
+[files]
+include = ["**/entities/**/use*.ts"]
+
+[rules]
+# Disallow action-based hook names
+disallow_filenames = [
+  "useCreate*",
+  "useUpdate*",
+  "useDelete*",
+  "useRemove*",
+  "useAdd*",
+  "useLogin*",
+  "useLogout*",
+  "useRegister*"
+]
+
+
+# ---------------------------------------------------------------------
+# LAYER 4 — NEXT.JS API ROUTES (BFF)
+# ---------------------------------------------------------------------
+# Responsibilities:
+# - Backend-for-frontend
+# - ONLY layer allowed to communicate with NestJS or external services
+#
+# Allowed dependencies:
+# - Axios
+# - External / backend APIs
+
+[files]
+include = ["**/app/api/**"]
+
+[rules]
+# Axios-only
+require_patterns = [
+  "axios\\."
+]
+
+# fetch() is never allowed
+disallow_patterns = [
+  "fetch("
+]
+
+
+# ---------------------------------------------------------------------
+# STRUCTURE & NAMING CONVENTIONS
+# ---------------------------------------------------------------------
+
+[conventions]
+# Component-specific hooks
+component_hook_naming = "^use[A-Z][A-Za-z0-9]+\\.ts$"
+
+# Domain hooks (intent-based)
+domai

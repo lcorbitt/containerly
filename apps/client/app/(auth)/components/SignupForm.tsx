@@ -1,64 +1,19 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { signIn } from 'next-auth/react';
-import { env } from '@/env';
-import { API_ENDPOINTS, SignupDto } from '@containerly/common';
+import { useSignupForm } from './hooks/useSignupForm';
 
 export function SignupForm() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [organizationName, setOrganizationName] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const data: SignupDto = { email, password, organizationName };
-      
-      // Call signup API directly
-      const response = await fetch(`${env.API_URL}${API_ENDPOINTS.AUTH.SIGNUP}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Signup failed');
-      }
-
-      // Signup successful - automatically sign in and redirect to dashboard
-      const result = await signIn('credentials', {
-        email: data.email,
-        password: data.password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        // If auto-login fails, redirect to login page
-        router.push(`/login?email=${encodeURIComponent(data.email)}&message=Account created! Please sign in.`);
-      } else {
-        // Successfully signed in - redirect to dashboard
-        router.push('/dashboard');
-        router.refresh();
-      }
-    } catch (err: any) {
-      setError(
-        err?.message || 'Signup failed. Please try again.'
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    email,
+    setEmail,
+    password,
+    setPassword,
+    organizationName,
+    setOrganizationName,
+    handleSubmit,
+    isLoading,
+    error,
+  } = useSignupForm();
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -105,7 +60,11 @@ export function SignupForm() {
         />
       </div>
 
-      {error && <div className="text-red-600 text-sm">{error}</div>}
+      {error && (
+        <div className="text-red-600 text-sm">
+          {error instanceof Error ? error.message : 'Signup failed. Please try again.'}
+        </div>
+      )}
 
       <button
         type="submit"
