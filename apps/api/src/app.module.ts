@@ -13,7 +13,7 @@ import { User, Lookup, Organization } from '@containerly/db';
     ConfigModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
-      url: process.env.DATABASE_URL,
+      url: process.env.DATABASE_URL || 'postgresql://user:password@localhost:5432/containerly',
       entities: [User, Lookup, Organization],
       synchronize: false,
       logging: process.env.NODE_ENV === 'development',

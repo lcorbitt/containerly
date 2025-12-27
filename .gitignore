@@ -23,6 +23,10 @@ dist/
 .env.local
 .env.*.local
 
+# App-specific environment files
+apps/client/.env*
+apps/api/.env*
+
 # Debug
 npm-debug.log*
 yarn-debug.log*
