@@ -1,9 +1,25 @@
+// Load reflect-metadata FIRST (required for TypeORM decorators)
+// Using require() to ensure it loads before any imports
+require('reflect-metadata');
+
+// Load .env file
+const path = require('path');
+const envPath = path.resolve(__dirname, '../.env');
+require('dotenv').config({ path: envPath });
+
+// Register tsconfig-paths for @containerly/* imports
+require('tsconfig-paths/register');
+
+// Now import TypeORM entities and other modules
 import { createDataSource, DatabaseRepository } from '@containerly/db';
 import { LookupStatus, UserRole } from '@containerly/common';
 import * as bcrypt from 'bcrypt';
 
 async function seed() {
-  const dataSource = createDataSource(process.env.DATABASE_URL!);
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL is not set. Please set it in apps/api/.env');
+  }
+  const dataSource = createDataSource(process.env.DATABASE_URL);
   await dataSource.initialize();
   const repository = new DatabaseRepository(dataSource);
 

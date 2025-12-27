@@ -1,24 +1,4 @@
-// Load .env file FIRST, before any other imports that might use environment variables
-// Using require to ensure this executes before imports are evaluated
-const path = require('path');
-const fs = require('fs');
-const envPath = path.resolve(__dirname, '../.env');
-const result = require('dotenv').config({ path: envPath });
-
-if (result.error) {
-  console.warn(`Warning: Could not load .env file from ${envPath}:`, result.error.message);
-} else {
-  console.log(`Loaded .env file from ${envPath}`);
-}
-
-// Debug: Log DATABASE_URL (without password)
-if (process.env.DATABASE_URL) {
-  const dbUrl = process.env.DATABASE_URL.replace(/:[^:@]+@/, ':****@');
-  console.log(`DATABASE_URL: ${dbUrl}`);
-} else {
-  console.error('ERROR: DATABASE_URL is not set!');
-}
-
+import 'dotenv/config';
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
